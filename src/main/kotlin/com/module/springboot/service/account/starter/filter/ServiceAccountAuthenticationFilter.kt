@@ -90,17 +90,6 @@ class ServiceAccountAuthenticationFilter(
         if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
             return authHeader.substring(BEARER_PREFIX.length)
         }
-        
-        // Then try to get token from cookie
-        val cookies = request.cookies
-        if (cookies != null) {
-            for (cookie in cookies) {
-                if (cookie.name == serviceAccountSecurityProperties.identityKey) {
-                    return cookie.value
-                }
-            }
-        }
-        
         return null
     }
 }

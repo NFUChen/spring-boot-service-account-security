@@ -15,7 +15,6 @@ data class ServiceAccountSecurityProperties(
     /**
      * The name of the identity cookie key
      */
-    val identityKey: String = "jwt",
     val secret: String,
     val issuer: String = "service-account-starter",
 )
