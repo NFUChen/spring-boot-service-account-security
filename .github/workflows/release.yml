@@ -1,0 +1,146 @@
+name: Build and Release JAR
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+    inputs:
+      release_version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v0.0.1'
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+      
+    - name: Run tests
+      run: ./gradlew test
+      
+    - name: Build JAR
+      run: ./gradlew clean jar
+      
+    - name: Get version from tag or input
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.release_version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Get JAR file info
+      id: jar_info
+      run: |
+        JAR_FILE=$(find build/libs -name "*.jar" -type f | head -1)
+        JAR_NAME=$(basename "$JAR_FILE")
+        echo "JAR_FILE=$JAR_FILE" >> $GITHUB_OUTPUT
+        echo "JAR_NAME=$JAR_NAME" >> $GITHUB_OUTPUT
+        echo "JAR_SIZE=$(stat -c%s "$JAR_FILE" | numfmt --to=iec)" >> $GITHUB_OUTPUT
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        ## Spring Boot Service Account Starter ${{ steps.get_version.outputs.VERSION }}
+        
+        ### 📦 What's Included
+        - JWT token 驗證與解析
+        - Service Account 認證
+        - Spring Security 整合
+        - 可配置的保護/非保護路由
+        - Scope 權限管理
+        
+        ### 🚀 How to Use
+        1. Download the JAR file: `${{ steps.jar_info.outputs.JAR_NAME }}`
+        2. Add it to your Spring Boot project classpath
+        3. Import `ServiceAccountSecurityConfiguration` in your main application class
+        4. Configure `application.properties` with your JWT secret
+        
+        ### 📋 Requirements
+        - Java 17+
+        - Spring Boot 3.2.5+
+        - Kotlin 1.9.25+
+        
+        ### 📄 Documentation
+        See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for detailed usage instructions.
+        
+        ---
+        **File Size:** ${{ steps.jar_info.outputs.JAR_SIZE }}
+        **Build Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        EOF
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: Spring Boot Service Account Starter ${{ steps.get_version.outputs.VERSION }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        
+    - name: Upload JAR to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.jar_info.outputs.JAR_FILE }}
+        asset_name: ${{ steps.jar_info.outputs.JAR_NAME }}
+        asset_content_type: application/java-archive
+        
+    - name: Upload sources JAR (if exists)
+      continue-on-error: true
+      run: |
+        SOURCES_JAR=$(find build/libs -name "*-sources.jar" -type f | head -1)
+        if [ -f "$SOURCES_JAR" ]; then
+          echo "Found sources JAR: $SOURCES_JAR"
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/java-archive" \
+            --data-binary @"$SOURCES_JAR" \
+            "${{ steps.create_release.outputs.upload_url }}?name=$(basename "$SOURCES_JAR")&label=Sources JAR"
+        else
+          echo "No sources JAR found, skipping..."
+        fi
+        
+    - name: Summary
+      run: |
+        echo "## 🎉 Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **JAR File:** ${{ steps.jar_info.outputs.JAR_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **File Size:** ${{ steps.jar_info.outputs.JAR_SIZE }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Release URL:** ${{ steps.create_release.outputs.html_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Download Links:" >> $GITHUB_STEP_SUMMARY
+        echo "- [Download JAR](${{ steps.create_release.outputs.html_url }})" >> $GITHUB_STEP_SUMMARY
+        echo "- [View Release](${{ steps.create_release.outputs.html_url }})" >> $GITHUB_STEP_SUMMARY
