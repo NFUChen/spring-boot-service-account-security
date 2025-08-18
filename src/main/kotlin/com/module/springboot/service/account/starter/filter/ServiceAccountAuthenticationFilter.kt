@@ -1,6 +1,6 @@
 package com.module.springboot.service.account.starter.filter
 
-import com.module.springboot.service.account.starter.config.SecurityProperties
+import com.module.springboot.service.account.starter.config.ServiceAccountSecurityProperties
 import com.module.springboot.service.account.starter.service.ServiceAccountJwtService
 import com.module.springboot.service.account.starter.view.ServiceAccount
 import jakarta.servlet.FilterChain
@@ -15,9 +15,9 @@ import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-class ServiceAccountFilter(
+class ServiceAccountAuthenticationFilter(
     private val serviceAccountJwtService: ServiceAccountJwtService,
-    private val securityProperties: SecurityProperties
+    private val serviceAccountSecurityProperties: ServiceAccountSecurityProperties
 ): OncePerRequestFilter() {
     
     private val pathMatcher = AntPathMatcher()
@@ -79,7 +79,7 @@ class ServiceAccountFilter(
     }
     
     private fun isUnprotectedRoute(requestPath: String): Boolean {
-        return securityProperties.unprotectedRoutes.any { pattern ->
+        return serviceAccountSecurityProperties.unprotectedRoutes.any { pattern ->
             pathMatcher.match(pattern, requestPath)
         }
     }
@@ -95,7 +95,7 @@ class ServiceAccountFilter(
         val cookies = request.cookies
         if (cookies != null) {
             for (cookie in cookies) {
-                if (cookie.name == securityProperties.identityKey) {
+                if (cookie.name == serviceAccountSecurityProperties.identityKey) {
                     return cookie.value
                 }
             }

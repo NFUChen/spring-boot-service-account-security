@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 
 @ConfigurationProperties(prefix = "service-account-security")
-data class SecurityProperties(
+data class ServiceAccountSecurityProperties(
     /**
      * List of routes that do not require authentication.
      * These routes are accessible without any security checks.

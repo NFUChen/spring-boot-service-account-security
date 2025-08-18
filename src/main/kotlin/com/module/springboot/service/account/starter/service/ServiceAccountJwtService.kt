@@ -1,6 +1,6 @@
 package com.module.springboot.service.account.starter.service
 
-import com.module.springboot.service.account.starter.config.SecurityProperties
+import com.module.springboot.service.account.starter.config.ServiceAccountSecurityProperties
 import com.module.springboot.service.account.starter.view.ServiceAccount
 import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Service
@@ -9,7 +9,7 @@ import java.util.*
 
 @Service("service-account")
 class ServiceAccountJwtService(
-    private val properties: SecurityProperties,
+    private val properties: ServiceAccountSecurityProperties,
     private val defaultJwtService: DefaultJwtService,
 ): JwtService<ServiceAccount>, TokenIssuer<ServiceAccount> {
     override lateinit var secret: ByteArray

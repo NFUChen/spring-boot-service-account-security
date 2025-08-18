@@ -1,6 +1,6 @@
 package com.module.springboot.service.account.starter.service
 
-import com.module.springboot.service.account.starter.config.SecurityProperties
+import com.module.springboot.service.account.starter.config.ServiceAccountSecurityProperties
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -21,7 +21,7 @@ interface JwtService<T> {
 
 @Service
 class DefaultJwtService(
-    val properties: SecurityProperties
+    val properties: ServiceAccountSecurityProperties
 ): JwtService<Map<String, Any>>, TokenIssuer<Map<String, Any>> {
 
     override lateinit var secret: ByteArray
