@@ -1,14 +1,14 @@
 plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
-    id("org.springframework.boot") version "3.5.4"
+    id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.7"
     `java-library`
 }
 
-group = "com.module"
-version = "0.0.1-SNAPSHOT"
-description = "spring-boot-service-account-starter"
+group = "com.module.service.account.security"
+version = "0.0.1"
+description = "spring-boot-service-account-security-package"
 
 java {
     toolchain {
