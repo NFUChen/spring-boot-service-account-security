@@ -1,6 +1,6 @@
 package com.module.springboot.service.account.starter
 
-import com.module.springboot.service.account.starter.annotation.RequireScope
+import com.module.springboot.service.account.starter.annotation.RequireScopes
 import com.module.springboot.service.account.starter.view.ServiceAccount
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -34,14 +34,23 @@ class RequireScopeTest {
 
     @Service
     class TestService {
-        @RequireScope(scope = "read:data")
-        fun methodWithScope(): String = "success"
+        @RequireScopes(scopes = ["read:data"])
+        fun methodWithSingleScope(): String = "single scope success"
 
-        fun methodWithoutScope(): String = "success"
+        @RequireScopes(scopes = ["read:data", "write:data"])
+        fun methodWithMultipleScopes(): String = "multiple scopes success"
+
+        @RequireScopes(scopes = ["admin:read", "admin:write", "admin:delete"])
+        fun methodWithThreeScopes(): String = "three scopes success"
+
+        @RequireScopes() // Empty scopes - should allow access
+        fun methodWithEmptyScopes(): String = "empty scopes success"
+
+        fun methodWithoutAnnotation(): String = "no annotation success"
     }
 
     @Test
-    fun `should allow access when user has required scope`() {
+    fun `should allow access when user has single required scope`() {
         // Arrange
         val serviceAccount = ServiceAccount("test-client", "test-user", setOf("read:data", "write:data"))
         val authorities = listOf(SimpleGrantedAuthority("SCOPE_read:data"), SimpleGrantedAuthority("SCOPE_write:data"))
@@ -49,22 +58,87 @@ class RequireScopeTest {
         SecurityContextHolder.getContext().authentication = authentication
 
         // Act & Assert - should not throw exception
-        val result = testService.methodWithScope()
-        assert(result == "success")
+        val result = testService.methodWithSingleScope()
+        assert(result == "single scope success")
     }
 
     @Test
-    fun `should deny access when user lacks required scope`() {
+    fun `should allow access when user has all multiple required scopes`() {
         // Arrange
-        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("write:data"))
-        val authorities = listOf(SimpleGrantedAuthority("SCOPE_write:data"))
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("read:data", "write:data", "admin:read"))
+        val authorities = listOf(
+            SimpleGrantedAuthority("SCOPE_read:data"), 
+            SimpleGrantedAuthority("SCOPE_write:data"),
+            SimpleGrantedAuthority("SCOPE_admin:read")
+        )
+        val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
+        SecurityContextHolder.getContext().authentication = authentication
+
+        // Act & Assert - should not throw exception
+        val result = testService.methodWithMultipleScopes()
+        assert(result == "multiple scopes success")
+    }
+
+    @Test
+    fun `should deny access when user lacks some required scopes`() {
+        // Arrange
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("read:data")) // Missing write:data
+        val authorities = listOf(SimpleGrantedAuthority("SCOPE_read:data"))
         val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
         SecurityContextHolder.getContext().authentication = authentication
 
         // Act & Assert
         assertThrows<AccessDeniedException> {
-            testService.methodWithScope()
+            testService.methodWithMultipleScopes()
         }
+    }
+
+    @Test
+    fun `should deny access when user has no required scopes`() {
+        // Arrange
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("other:scope"))
+        val authorities = listOf(SimpleGrantedAuthority("SCOPE_other:scope"))
+        val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
+        SecurityContextHolder.getContext().authentication = authentication
+
+        // Act & Assert
+        assertThrows<AccessDeniedException> {
+            testService.methodWithSingleScope()
+        }
+    }
+
+    @Test
+    fun `should deny access when user has partial scopes for three-scope method`() {
+        // Arrange
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("admin:read", "admin:write")) // Missing admin:delete
+        val authorities = listOf(
+            SimpleGrantedAuthority("SCOPE_admin:read"),
+            SimpleGrantedAuthority("SCOPE_admin:write")
+        )
+        val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
+        SecurityContextHolder.getContext().authentication = authentication
+
+        // Act & Assert
+        assertThrows<AccessDeniedException> {
+            testService.methodWithThreeScopes()
+        }
+    }
+
+    @Test
+    fun `should allow access when user has all three required scopes`() {
+        // Arrange
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("admin:read", "admin:write", "admin:delete"))
+        val authorities = listOf(
+            SimpleGrantedAuthority("SCOPE_admin:read"),
+            SimpleGrantedAuthority("SCOPE_admin:write"),
+            SimpleGrantedAuthority("SCOPE_admin:delete")
+        )
+        val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
+        SecurityContextHolder.getContext().authentication = authentication
+
+        // Act & Assert
+        val result = testService.methodWithThreeScopes()
+        assert(result == "three scopes success")
     }
 
     @Test
@@ -74,8 +148,21 @@ class RequireScopeTest {
 
         // Act & Assert
         assertThrows<AccessDeniedException> {
-            testService.methodWithScope()
+            testService.methodWithSingleScope()
         }
+    }
+
+    @Test
+    fun `should allow access to methods with empty scopes annotation`() {
+        // Arrange
+        val serviceAccount = ServiceAccount("test-client", "test-user", setOf("some:scope"))
+        val authorities = listOf(SimpleGrantedAuthority("SCOPE_some:scope"))
+        val authentication = UsernamePasswordAuthenticationToken(serviceAccount, null, authorities)
+        SecurityContextHolder.getContext().authentication = authentication
+
+        // Act & Assert
+        val result = testService.methodWithEmptyScopes()
+        assert(result == "empty scopes success")
     }
 
     @Test
@@ -87,7 +174,7 @@ class RequireScopeTest {
         SecurityContextHolder.getContext().authentication = authentication
 
         // Act & Assert
-        val result = testService.methodWithoutScope()
-        assert(result == "success")
+        val result = testService.methodWithoutAnnotation()
+        assert(result == "no annotation success")
     }
 }

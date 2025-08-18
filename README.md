@@ -53,11 +53,17 @@ class YourController {
         return ResponseEntity.ok("Hello ${serviceAccount.name}")
     }
 
-    // 方法 1: 使用自訂的 @RequireScope 註解
-    @GetMapping("/require-scope")
-    @RequireScope(scope = "read:data")
-    fun requireScopeEndpoint(): ResponseEntity<String> {
+    // 方法 1: 使用自訂的 @RequireScopes 註解
+    @GetMapping("/require-single-scope")
+    @RequireScopes(scopes = ["read:data"])
+    fun requireSingleScopeEndpoint(): ResponseEntity<String> {
         return ResponseEntity.ok("You have the required scope!")
+    }
+
+    @GetMapping("/require-multiple-scopes")
+    @RequireScopes(scopes = ["read:data", "write:data"])
+    fun requireMultipleScopesEndpoint(): ResponseEntity<String> {
+        return ResponseEntity.ok("You have all required scopes!")
     }
 
     // 方法 2: 使用 Spring Security 的 @PreAuthorize（推薦）
@@ -100,10 +106,11 @@ class YourController {
 
 ### @RequireScope vs @PreAuthorize
 
-#### @RequireScope（自訂註解）
+#### @RequireScopes（自訂註解）
 - 方法級別的權限控制註解
-- 使用 AOP 攔截器檢查是否具有特定 scope
-- 簡單易用，只需指定 scope 名稱
+- 使用 AOP 攔截器檢查是否具有特定 scopes
+- 支援單一或多個 scope 檢查
+- 需要使用者擁有「所有」指定的 scopes 才能存取
 
 #### @PreAuthorize（推薦使用）
 - Spring Security 原生的權限控制註解
@@ -121,11 +128,15 @@ JWT token 中的 scopes 會自動轉換為 Spring Security 的 authorities，格
 
 ### 權限檢查方式
 
-1. **@RequireScope**: 檢查單一 scope
+1. **@RequireScopes**: 檢查多個 scope（需全部擁有）
+   - `@RequireScopes(scopes = ["read:data"])` - 檢查單一 scope
+   - `@RequireScopes(scopes = ["read:data", "write:data"])` - 檢查多個 scope（AND 邏輯）
+   - `@RequireScopes()` - 空白 scopes，允許存取
+
 2. **@PreAuthorize**: 支援複雜表達式
    - `hasAuthority('SCOPE_read:data')` - 檢查單一 scope
-   - `hasAnyAuthority('SCOPE_admin:read', 'SCOPE_admin:write')` - 檢查任一 scope
-   - `hasAuthority('SCOPE_admin:read') and hasAuthority('SCOPE_admin:write')` - 檢查多個 scope
+   - `hasAnyAuthority('SCOPE_admin:read', 'SCOPE_admin:write')` - 檢查任一 scope（OR 邏輯）
+   - `hasAuthority('SCOPE_admin:read') and hasAuthority('SCOPE_admin:write')` - 檢查多個 scope（AND 邏輯）
 
 ## 認證方式
 
