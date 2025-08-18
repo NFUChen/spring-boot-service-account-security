@@ -1,12 +1,11 @@
 package com.module.springboot.service.account.starter.service
 
-import com.module.springboot.service.account.starter.config.JwtProperties
+import com.module.springboot.service.account.starter.config.SecurityProperties
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import jakarta.annotation.PostConstruct
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -22,9 +21,7 @@ interface JwtService<T> {
 
 @Service
 class DefaultJwtService(
-    @Value("\${jwt.issuer:default-issuer}")
-    private val issuer: String,
-    private val jwtProperties: JwtProperties
+    val properties: SecurityProperties
 ): JwtService<Map<String, Any>>, TokenIssuer<Map<String, Any>> {
 
     override lateinit var secret: ByteArray
@@ -32,13 +29,13 @@ class DefaultJwtService(
 
     @PostConstruct
     fun postConstruct() {
-        secret = Base64.getDecoder().decode(jwtProperties.secret)
+        secret = Base64.getDecoder().decode(properties.secret)
     }
 
     override fun issueToken(claims: Map<String, Any>, expireAtNumberOfSeconds: Int): String {
         val signedKey = Keys.hmacShaKeyFor(secret)
         val jwtBuilder = Jwts.builder()
-            .issuer(issuer)
+            .issuer(properties.issuer)
             .subject(claims.getOrDefault("id", UUID.randomUUID()).toString())
             .issuedAt(Date())
             .expiration(Date(System.currentTimeMillis() + expireAtNumberOfSeconds.toLong() * 1000))

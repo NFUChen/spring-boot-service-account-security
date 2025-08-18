@@ -1,7 +1,7 @@
 package com.module.springboot.service.account.starter.service
 
+import com.module.springboot.service.account.starter.config.SecurityProperties
 import com.module.springboot.service.account.starter.view.ServiceAccount
-import com.module.springboot.service.account.starter.config.JwtProperties
 import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Service
 import java.util.*
@@ -9,13 +9,13 @@ import java.util.*
 
 @Service("service-account")
 class ServiceAccountJwtService(
-    private val jwtProperties: JwtProperties,
+    private val properties: SecurityProperties,
     private val defaultJwtService: DefaultJwtService,
 ): JwtService<ServiceAccount>, TokenIssuer<ServiceAccount> {
     override lateinit var secret: ByteArray
     @PostConstruct
     fun postConstruct() {
-        secret = Base64.getDecoder().decode(jwtProperties.secret)
+        secret = Base64.getDecoder().decode(properties.secret)
     }
 
     override fun parseToken(token: String): ServiceAccount? {

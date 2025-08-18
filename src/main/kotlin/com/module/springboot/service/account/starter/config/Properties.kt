@@ -3,15 +3,8 @@ package com.module.springboot.service.account.starter.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
-@ConfigurationProperties(prefix = "jwt")
-data class JwtProperties(
-    /**
-     * JWT secret key for signing and verifying tokens
-     */
-    val secret: String
-)
 
-@ConfigurationProperties(prefix = "security")
+@ConfigurationProperties(prefix = "service-account-security")
 data class SecurityProperties(
     /**
      * List of routes that do not require authentication.
@@ -22,5 +15,7 @@ data class SecurityProperties(
     /**
      * The name of the identity cookie key
      */
-    val identityKey: String = "jwt"
+    val identityKey: String = "jwt",
+    val secret: String,
+    val issuer: String = "service-account-starter",
 )
