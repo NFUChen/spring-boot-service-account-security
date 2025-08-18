@@ -21,6 +21,7 @@ class ServiceAccountFilter(
 ): OncePerRequestFilter() {
     
     private val pathMatcher = AntPathMatcher()
+    private val BEARER_PREFIX = "Bearer "
     
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -86,8 +87,8 @@ class ServiceAccountFilter(
     private fun extractToken(request: HttpServletRequest): String? {
         // First try to get token from Authorization header (Bearer token)
         val authHeader = request.getHeader("Authorization")
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7)
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            return authHeader.substring(BEARER_PREFIX.length)
         }
         
         // Then try to get token from cookie
