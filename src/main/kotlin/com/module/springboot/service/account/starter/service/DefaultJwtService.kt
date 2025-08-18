@@ -6,6 +6,7 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -21,6 +22,7 @@ interface JwtService<T> {
 
 @Service
 class DefaultJwtService(
+    @Value("\${jwt.issuer:default-issuer}")
     private val issuer: String,
     private val jwtProperties: JwtProperties
 ): JwtService<Map<String, Any>>, TokenIssuer<Map<String, Any>> {
