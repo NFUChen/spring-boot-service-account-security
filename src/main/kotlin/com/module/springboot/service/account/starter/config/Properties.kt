@@ -7,10 +7,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "service-account-security")
 data class ServiceAccountSecurityProperties(
     /**
-     * List of routes that do not require authentication.
-     * These routes are accessible without any security checks.
+     * List of internal endpoints that require service account authentication.
+     * These routes are only accessible with valid service account tokens.
      */
-    var internalEndpoints: List<String>,
+    val internalEndpoints: List<String>,
 
     /**
      * The name of the identity cookie key
