@@ -29,7 +29,7 @@ class ServiceAccountAuthenticationFilter(
         val requestPath = request.requestURI
         
         // Check if the request path is in the unprotected routes
-        if (isUnprotectedRoute(requestPath)) {
+        if (!isTargetRoutes(requestPath)) {
             filterChain.doFilter(request, response)
             return
         }
@@ -76,8 +76,8 @@ class ServiceAccountAuthenticationFilter(
         filterChain.doFilter(request, response)
     }
     
-    private fun isUnprotectedRoute(requestPath: String): Boolean {
-        return serviceAccountSecurityProperties.unprotectedRoutes.any { pattern ->
+    private fun isTargetRoutes(requestPath: String): Boolean {
+        return serviceAccountSecurityProperties.internalEndpoints.any { pattern ->
             pathMatcher.match(pattern, requestPath)
         }
     }

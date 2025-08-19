@@ -10,7 +10,7 @@ data class ServiceAccountSecurityProperties(
      * List of routes that do not require authentication.
      * These routes are accessible without any security checks.
      */
-    val unprotectedRoutes: List<String> = listOf("/public/**", "/health", "/actuator/**"),
+    var internalEndpoints: List<String>,
 
     /**
      * The name of the identity cookie key
