@@ -15,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.stereotype.Service
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig
+import org.springframework.context.annotation.Import
 
 @SpringJUnitConfig
 @SpringBootTest(
-    classes = [ServiceAccountSecurityConfiguration::class, RequireScopeTest.TestConfig::class],
+    classes = [TestConfiguration::class, RequireScopeTest.TestConfig::class],
     properties = ["spring.profiles.active=test"]
 )
+@Import(TestConfiguration::class)
 class RequireScopeTest {
 
     @Autowired
