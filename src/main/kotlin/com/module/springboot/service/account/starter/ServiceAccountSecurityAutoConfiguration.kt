@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
@@ -32,10 +33,11 @@ class ServiceAccountSecurityConfiguration(
     @Bean
     @Order(1)
     fun serviceAccountSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http
-            .securityMatcher(*serviceAccountSecurityProperties.internalEndpoints.toTypedArray())
+        http.securityMatcher(*serviceAccountSecurityProperties.internalEndpoints.toTypedArray())
+            .sessionManagement { sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .addFilterBefore(serviceAccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
             .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .csrf { it.disable() }
         return http.build()
     }
 
