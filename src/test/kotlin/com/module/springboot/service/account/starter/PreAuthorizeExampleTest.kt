@@ -15,15 +15,17 @@ import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.stereotype.Service
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 
 /**
  * 展示如何使用 @PreAuthorize 搭配 SCOPE_ authorities 進行權限檢查
  */
 @SpringJUnitConfig
 @SpringBootTest(
-    classes = [ServiceAccountSecurityConfiguration::class, PreAuthorizeExampleTest.TestConfig::class],
+    classes = [TestConfiguration::class, PreAuthorizeExampleTest.TestConfig::class],
     properties = ["spring.profiles.active=test"]
 )
+@Import(TestConfiguration::class)
 class PreAuthorizeExampleTest {
 
     @Autowired
