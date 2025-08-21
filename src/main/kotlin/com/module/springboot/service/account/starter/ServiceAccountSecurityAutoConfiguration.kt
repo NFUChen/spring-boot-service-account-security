@@ -4,6 +4,7 @@ import com.module.springboot.service.account.starter.config.ServiceAccountSecuri
 import com.module.springboot.service.account.starter.filter.ServiceAccountAuthenticationFilter
 import com.module.springboot.service.account.starter.service.ServiceAccountJwtService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -32,6 +33,7 @@ class ServiceAccountSecurityConfiguration(
     val serviceAccountJwtService: ServiceAccountJwtService,
     val serviceAccountSecurityProperties: ServiceAccountSecurityProperties,
     @Autowired(required = false)
+    @Qualifier("requestMappingHandlerMapping")
     val requestMapping: RequestMappingHandlerMapping
 ) {
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
