@@ -43,7 +43,7 @@ class ServiceAccountSecurityConfiguration(
         http.securityMatcher(*serviceAccountSecurityProperties.internalEndpoints.toTypedArray())
             .sessionManagement { sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .addFilterBefore(serviceAccountAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
-            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .authorizeHttpRequests { it.anyRequest().permitAll() } // Allow requests to internal endpoints without authentication
             .csrf { it.disable() }
         return http.build()
     }
