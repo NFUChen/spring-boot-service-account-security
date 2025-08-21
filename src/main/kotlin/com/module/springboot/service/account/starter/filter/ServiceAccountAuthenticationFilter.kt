@@ -1,5 +1,6 @@
 package com.module.springboot.service.account.starter.filter
 
+import com.module.springboot.service.account.starter.annotation.BypassServiceAccountAuthentication
 import com.module.springboot.service.account.starter.config.ServiceAccountSecurityProperties
 import com.module.springboot.service.account.starter.service.ServiceAccountJwtService
 import com.module.springboot.service.account.starter.view.ServiceAccount
@@ -12,10 +13,13 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
+import org.springframework.web.method.HandlerMethod
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 class ServiceAccountAuthenticationFilter(
     private val serviceAccountJwtService: ServiceAccountJwtService,
-    private val serviceAccountSecurityProperties: ServiceAccountSecurityProperties
+    private val serviceAccountSecurityProperties: ServiceAccountSecurityProperties,
+    private val requestMapping: RequestMappingHandlerMapping
 ): OncePerRequestFilter() {
     
     private val pathMatcher = AntPathMatcher()
@@ -27,7 +31,16 @@ class ServiceAccountAuthenticationFilter(
         filterChain: FilterChain
     ) {
         val requestPath = request.requestURI
-        
+
+
+        val handler = requestMapping.getHandler(request)?.handler
+        if (handler != null && handler is HandlerMethod && isBypassEndpoint(handler)) {
+            // If the endpoint has the @BypassServiceAccountAuthentication annotation, skip authentication
+            filterChain.doFilter(request, response)
+            return
+        }
+
+
         // Check if the request path is in the unprotected routes
         if (!isTargetRoutes(requestPath)) {
             filterChain.doFilter(request, response)
@@ -75,11 +88,17 @@ class ServiceAccountAuthenticationFilter(
         
         filterChain.doFilter(request, response)
     }
+
     
     private fun isTargetRoutes(requestPath: String): Boolean {
         return serviceAccountSecurityProperties.internalEndpoints.any { pattern ->
             pathMatcher.match(pattern, requestPath)
         }
+    }
+
+    private fun isBypassEndpoint(method: HandlerMethod): Boolean {
+        return method.hasMethodAnnotation(BypassServiceAccountAuthentication::class.java) ||
+                method.beanType.isAnnotationPresent(BypassServiceAccountAuthentication::class.java)
     }
     
     private fun extractToken(request: HttpServletRequest): String? {
