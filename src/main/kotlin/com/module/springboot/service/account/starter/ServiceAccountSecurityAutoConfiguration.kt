@@ -3,6 +3,8 @@ package com.module.springboot.service.account.starter
 import com.module.springboot.service.account.starter.config.ServiceAccountSecurityProperties
 import com.module.springboot.service.account.starter.filter.ServiceAccountAuthenticationFilter
 import com.module.springboot.service.account.starter.service.ServiceAccountJwtService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
@@ -12,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 
 @Configuration
@@ -27,7 +30,9 @@ class JwtConfiguration {
 @ComponentScan(basePackages = ["com.module.springboot.service.account.starter"])
 class ServiceAccountSecurityConfiguration(
     val serviceAccountJwtService: ServiceAccountJwtService,
-    val serviceAccountSecurityProperties: ServiceAccountSecurityProperties
+    val serviceAccountSecurityProperties: ServiceAccountSecurityProperties,
+    @Autowired(required = false)
+    val requestMapping: RequestMappingHandlerMapping
 ) {
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
@@ -44,6 +49,6 @@ class ServiceAccountSecurityConfiguration(
     @Bean
     fun serviceAccountAuthenticationFilter(
     ): ServiceAccountAuthenticationFilter {
-        return ServiceAccountAuthenticationFilter(serviceAccountJwtService, serviceAccountSecurityProperties)
+        return ServiceAccountAuthenticationFilter(serviceAccountJwtService, serviceAccountSecurityProperties, requestMapping)
     }
 }
